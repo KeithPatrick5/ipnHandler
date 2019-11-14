@@ -1,0 +1,42 @@
+app: ipnHandler-app
+service: ipnHandler
+
+provider:
+  name: aws
+  runtime: nodejs8.10
+  stage: dev
+  region: 
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "dynamodb:*"
+      Resource: "arn:aws:dynamodb:${self:provider.region}:8888888888:table/${self:custom.dynamoDBtable}" # Check AWS DynamoDB resource
+  environment:
+    PORT: 8000
+    AWS_DYNAMODB_TABLE: ${self:custom.dynamoDBtable}
+    NETWORK: mainnet
+    TOKENID: 
+    ESCROW_WALLET_MNEMONIC: 
+    BITPAY_NETWORK: mainnet # testnet
+    GW_URL:
+      {
+        "Fn::Join":
+          [
+            "",
+            [
+              "https://",
+              { "Ref": "ApiGatewayRestApi" },
+              ".execute-api.${self:provider.region}.amazonaws.com/${self:provider.stage}",
+            ],
+          ],
+      }
+
+custom:
+  dynamoDBtable: bitpayTransactions # Check AWS DynamoDB table name
+
+functions:
+  app:
+    handler: index.handler
+    events:
+      - http: ANY /
+      - http: "ANY {proxy+}"
